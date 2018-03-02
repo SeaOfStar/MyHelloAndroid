@@ -79,10 +79,13 @@ public class DeviceInfoQRActivity extends AppCompatActivity {
         bindService(intent, conn, Context.BIND_AUTO_CREATE);
     }
 
+    /**
+     * 负责监听QR图片就绪的监听类
+     */
     private class QRReadyBroadcastReceiver extends BroadcastReceiver{
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(intent != null) {
+            if(intent != null && intent.getAction() != null) {
                 if (intent.getAction().equals(getString(R.string.action_bitmap_ready))) {
                     showQRCode();
                 }
