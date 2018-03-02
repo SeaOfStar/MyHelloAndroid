@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="helloworld.example.com.helloworld">
+
+    <!--蓝牙权限-->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <activity
+            android:name=".activity.MyActivity"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".activity.DeviceInfoActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/title_activity_device_info"
+            android:theme="@style/FullscreenTheme" />
+
+        <service
+            android:name=".service.MediaManagerService"
+            android:enabled="true"
+            android:exported="true" />
+        <service
+            android:name=".service.DeviceManagerService"
+            android:enabled="true"
+            android:exported="true">
+        </service>
+
+        <activity
+            android:name=".activity.DeviceInfoQRActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/title_activity_device_info_qr"
+            android:theme="@style/FullscreenTheme" />
+
+        <!--蓝牙通讯的QRCode-->
+        <service
+            android:name=".service.BlueToothConfigService"
+            android:enabled="true"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="@string/action_request_bluetooth_qrbitmap" />
+            </intent-filter>
+        </service>
+    </application>
+
+</manifest>
