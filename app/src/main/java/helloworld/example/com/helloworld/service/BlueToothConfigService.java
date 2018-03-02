@@ -5,11 +5,19 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.graphics.Bitmap;
+import android.net.wifi.WifiConfiguration;
+import android.util.JsonReader;
 import android.util.Log;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import helloworld.example.com.helloworld.R;
@@ -238,27 +246,48 @@ public class BlueToothConfigService extends WifiConfigService {
 
         @Override
         public void run() {
-            int readBytes = 0;
-            while (mmInStream != null && readBytes <= 0) {
-                try {
-                    byte[] buffer = new byte[4096];
-
-                    // 读取输入流
-                    readBytes = mmInStream.read(buffer);
-
-                    byte[] data = new byte[readBytes];
-                    for (int i=0; i<readBytes; i++) {
-                        data[i] = buffer[i];
-                    }
-
-                    String str = new String(data);
-                    System.out.println(" 》》》》 》》》》 获得字符串[" + readBytes + "]：" + str);
-
-                } catch (IOException e) {
-                    Log.e(TAG, "disconnected", e);
-                    break;
+            // JSON 解析
+            JsonReader reader = new JsonReader(new InputStreamReader(mmInStream));
+            Map<String, String>result = new HashMap<String, String>();
+            try {
+                reader.beginObject();
+                while(reader.hasNext()) {
+                    result.put(reader.nextName(), reader.nextString());
                 }
+                reader.endObject();
+                System.out.println("网络ID：" + result.get("network_id"));
+                System.out.println("密码：" + result.get("password"));
+                System.out.println("加密方式：" + result.get("crpt_type"));
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.e(TAG, "JSON解析失败：" + reader.toString());
             }
+
+//            int readBytes = 0;
+//            while (mmInStream != null && readBytes <= 0) {
+//                //                    byte[] buffer = new byte[4096];
+////
+////                    // 读取输入流
+////                    readBytes = mmInStream.read(buffer);
+////
+////                    byte[] data = new byte[readBytes];
+////                    for (int i=0; i<readBytes; i++) {
+////                        data[i] = buffer[i];
+////                    }
+////
+////                    String str = new String(data);
+////                    System.out.println(" 》》》》 》》》》 获得字符串[" + readBytes + "]：" + str);
+//
+//
+//                // JSON 解析
+////                JsonReader reader = new JsonReader(new InputStreamReader(mmInStream));
+//
+//                // wifi连接
+////                    BlueToothConfigService.this.configWifi("", "", 0);
+//
+//
+//            }
         }
     }
 }

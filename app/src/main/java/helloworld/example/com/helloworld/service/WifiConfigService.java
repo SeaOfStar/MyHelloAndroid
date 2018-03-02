@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Bitmap;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.Parcel;
@@ -26,6 +28,8 @@ import helloworld.example.com.helloworld.R;
 import static helloworld.example.com.helloworld.R.*;
 
 public abstract class WifiConfigService extends Service {
+
+
     public WifiConfigService() {
     }
 
@@ -125,4 +129,93 @@ public abstract class WifiConfigService extends Service {
         }
         return null;
     }
+
+    private class WifiConnector {
+        final String ssidToConnect;
+        final String password;
+        final int cipherType;       // 使用WifiManager中的定义
+        private WifiManager wifiManager;
+
+//        public enum WifiCipherType {
+//            WIFICIPHER_WEP, WIFICIPHER_WPA, WIFICIPHER_NOPASS, WIFICIPHER_INVALID
+//        }
+
+        public WifiConnector(String ssidToConnect, String password, int cipherType) {
+            this.ssidToConnect = ssidToConnect;
+            this.password = password;
+            this.cipherType = cipherType;
+
+            wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+        }
+
+        private WifiConfiguration createConfig() {
+            WifiConfiguration config = new WifiConfiguration();
+            config.allowedAuthAlgorithms.clear();
+            config.allowedGroupCiphers.clear();
+            config.allowedKeyManagement.clear();
+            config.allowedPairwiseCiphers.clear();
+            config.allowedProtocols.clear();
+            config.SSID = "\"" + ssidToConnect + "\"";
+
+            switch (this.cipherType) {
+                case WifiConfiguration.KeyMgmt.NONE:
+                {
+                    config.wepKeys[0] = "";
+                    config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+                    config.wepTxKeyIndex = 0;
+                }
+                break;
+
+                case WifiConfiguration.KeyMgmt.WPA_PSK:
+                {
+                    config.preSharedKey = "\""+password+"\"";
+                    config.hiddenSSID = true;
+                    config.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+                    config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+                    config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+                    config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+                    //config.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+                    config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+                    config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+                    config.status = WifiConfiguration.Status.ENABLED;
+                }
+                break;
+
+                case WifiConfiguration.KeyMgmt.WPA_EAP:
+                {
+                    config.hiddenSSID = true;
+                    config.wepKeys[0]= "\""+password+"\"";
+                    config.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.SHARED);
+                    config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+                    config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+                    config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
+                    config.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
+                    config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+                    config.wepTxKeyIndex = 0;
+                }
+                break;
+            }
+            return config;
+        }
+
+        public void connect() {
+            WifiConfiguration cfg = this.createConfig();
+            int configId = wifiManager.addNetwork(cfg);
+            boolean b = wifiManager.enableNetwork(configId, true);
+        }
+    }
+
+
+
+    /**
+     * 配置Wifi连接参数并启动
+     */
+    public boolean configWifi(final String ssid, final String password, final int type) {
+
+        WifiConnector connector = new WifiConnector(ssid, password, type);
+        connector.connect();
+
+        return true;
+    }
+
 }
