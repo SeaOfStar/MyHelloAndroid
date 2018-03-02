@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.graphics.Bitmap;
+import android.net.wifi.WifiConfiguration;
 import android.util.Log;
 
 import java.io.IOException;
@@ -253,6 +254,12 @@ public class BlueToothConfigService extends WifiConfigService {
 
                     String str = new String(data);
                     System.out.println(" 》》》》 》》》》 获得字符串[" + readBytes + "]：" + str);
+
+                    // JSON 解析
+
+                    // wifi连接
+//                    BlueToothConfigService.this.configWifi("", "", 0);
+
 
                 } catch (IOException e) {
                     Log.e(TAG, "disconnected", e);
