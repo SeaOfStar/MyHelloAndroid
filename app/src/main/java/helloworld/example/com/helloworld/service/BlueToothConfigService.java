@@ -5,12 +5,8 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.graphics.Bitmap;
-import android.net.wifi.WifiConfiguration;
 import android.util.JsonReader;
 import android.util.Log;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,8 +21,6 @@ import helloworld.example.com.helloworld.R;
 import static android.content.ContentValues.TAG;
 
 public class BlueToothConfigService extends WifiConfigService {
-
-    private final UUID DEFALUT_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     BluetoothAdapter mAdapter = BluetoothAdapter.getDefaultAdapter();
     private ServerThread serverThread;
@@ -60,9 +54,9 @@ public class BlueToothConfigService extends WifiConfigService {
             mAdapter.enable();
         }
 
-        String name = mAdapter.getName();
-        String address = mAdapter.getAddress();
-        System.out.println("bluetooth name = " + name + ", address = " + address);
+//        String name = mAdapter.getName();
+//        String address = mAdapter.getAddress();
+//        System.out.println("bluetooth name = " + name + ", address = " + address);
 
         super.onCreate();
     }
@@ -73,20 +67,16 @@ public class BlueToothConfigService extends WifiConfigService {
         startBluetoothListening();
     }
 
-    AcceptBluetoothConnection mAcceptThread;
     private void startBluetoothListening() {
-//        mAcceptThread = new AcceptBluetoothConnection();
-//        mAcceptThread.start();
-
-        serverThread = new ServerThread();
+        serverThread = new ServerThread(getDeviceId());
         serverThread.start();
     }
 
     @Override
     public void onDestroy() {
-        if (mAcceptThread != null) {
-            mAcceptThread.cancel();
-        }
+//        if (serverThread != null) {
+//            serverThread.cancel();
+//        }
         super.onDestroy();
     }
 
@@ -97,11 +87,16 @@ public class BlueToothConfigService extends WifiConfigService {
         private BluetoothServerSocket serverSocket;
 
         private final String TAG = "BlueToothTag";
+        private final UUID deviceId;
+
+        private ServerThread(String deviceId) {
+            this.deviceId = UUID.fromString(deviceId);
+        }
 
         @Override
         public void run() {
             try {
-                serverSocket = mAdapter.listenUsingRfcommWithServiceRecord(TAG, DEFALUT_UUID);
+                serverSocket = mAdapter.listenUsingRfcommWithServiceRecord(TAG, deviceId);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -149,81 +144,6 @@ public class BlueToothConfigService extends WifiConfigService {
         }
     }
 
-    /**
-     * 用于接受蓝牙连接的线程
-      */
-    private class AcceptBluetoothConnection extends Thread {
-        private final BluetoothServerSocket mServerSocket;
-
-
-        public AcceptBluetoothConnection() {
-            BluetoothServerSocket tmp = null;
-            String uuidStr = BlueToothConfigService.this.getDeviceId();
-            if (uuidStr != null) {
-                try {
-                    UUID uuid = UUID.fromString(uuidStr);
-                    uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-//                    tmp = mAdapter.listenUsingRfcommWithServiceRecord(mAdapter.getName(), uuid);
-                    tmp = mAdapter.listenUsingInsecureRfcommWithServiceRecord(mAdapter.getName(), uuid);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            mServerSocket = tmp;
-        }
-
-        private int mState = BluetoothAdapter.STATE_DISCONNECTED;
-
-        @Override
-        public void run() {
-            BluetoothSocket socket = null;
-            // 循环，直到连接成功
-            int mState = BluetoothAdapter.STATE_CONNECTING;
-
-            while (mState != BluetoothAdapter.STATE_CONNECTED) {
-                try {
-                    // 这是一个阻塞调用 返回成功的连接
-                    // mServerSocket.close()在另一个线程中调用，可以中止该阻塞
-                    socket = mServerSocket.accept();
-                } catch (IOException e) {
-                    Log.e(TAG, "accept() failed", e);
-                    break;
-                }
-                // 如果连接被接受
-                if (socket != null) {
-                    synchronized (BlueToothConfigService.this) {
-                        switch (mState) {
-                            case BluetoothAdapter.STATE_CONNECTING:
-                                mState = BluetoothAdapter.STATE_CONNECTED;
-                                // 正常情况。启动ConnectedThread。
-                                System.out.println("获得链接：" + socket.getRemoteDevice().getName());
-                                connected(socket, socket.getRemoteDevice());
-                                break;
-
-                            case BluetoothAdapter.STATE_CONNECTED:
-                                // 没有准备或已连接。新连接终止。
-                                try {
-                                    socket.close();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                                break;
-                        }
-                    }
-                }
-            }
-        }
-
-        public void cancel() {
-            try {
-                if (mServerSocket != null) {
-                    mServerSocket.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
     private void connected(BluetoothSocket socket, BluetoothDevice remoteDevice) {
         new ReadDataThread(socket).start();
@@ -262,32 +182,13 @@ public class BlueToothConfigService extends WifiConfigService {
             } catch (IOException e) {
                 e.printStackTrace();
                 Log.e(TAG, "JSON解析失败：" + reader.toString());
+            } finally {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
-
-//            int readBytes = 0;
-//            while (mmInStream != null && readBytes <= 0) {
-//                //                    byte[] buffer = new byte[4096];
-////
-////                    // 读取输入流
-////                    readBytes = mmInStream.read(buffer);
-////
-////                    byte[] data = new byte[readBytes];
-////                    for (int i=0; i<readBytes; i++) {
-////                        data[i] = buffer[i];
-////                    }
-////
-////                    String str = new String(data);
-////                    System.out.println(" 》》》》 》》》》 获得字符串[" + readBytes + "]：" + str);
-//
-//
-//                // JSON 解析
-////                JsonReader reader = new JsonReader(new InputStreamReader(mmInStream));
-//
-//                // wifi连接
-////                    BlueToothConfigService.this.configWifi("", "", 0);
-//
-//
-//            }
         }
     }
 }
