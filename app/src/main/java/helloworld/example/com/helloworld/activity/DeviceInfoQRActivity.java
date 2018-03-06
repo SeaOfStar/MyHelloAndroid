@@ -16,6 +16,7 @@ import android.widget.ImageView;
 
 import helloworld.example.com.helloworld.R;
 import helloworld.example.com.helloworld.service.BlueToothConfigService;
+import helloworld.example.com.helloworld.service.HotPointConfigService;
 import helloworld.example.com.helloworld.service.WifiConfigService;
 
 public class DeviceInfoQRActivity extends AppCompatActivity {
@@ -74,7 +75,8 @@ public class DeviceInfoQRActivity extends AppCompatActivity {
 
         // 启动生成蓝牙图片的服务
         Intent intent = new Intent();
-        intent.setClass(DeviceInfoQRActivity.this, BlueToothConfigService.class);
+//        intent.setClass(DeviceInfoQRActivity.this, BlueToothConfigService.class);
+        intent.setClass(DeviceInfoQRActivity.this, HotPointConfigService.class);
         intent.setAction(getString(R.string.action_request_bluetooth_qrbitmap));
         bindService(intent, conn, Context.BIND_AUTO_CREATE);
     }
