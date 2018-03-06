@@ -175,9 +175,16 @@ public class BlueToothConfigService extends WifiConfigService {
                     result.put(reader.nextName(), reader.nextString());
                 }
                 reader.endObject();
-                System.out.println("网络ID：" + result.get("network_id"));
-                System.out.println("密码：" + result.get("password"));
-                System.out.println("加密方式：" + result.get("crpt_type"));
+
+                String networkId = result.get("network_id");
+                String password = result.get("password");
+                int crypt = Integer.parseInt(result.get("crpt_type"));
+                System.out.println("网络ID：" + networkId);
+                System.out.println("密码：" + password);
+                System.out.println("加密方式：" + crypt);
+
+                // 使用新配置连接网络
+                configWifi(networkId, password, crypt);
 
             } catch (IOException e) {
                 e.printStackTrace();
